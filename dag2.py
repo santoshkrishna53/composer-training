@@ -8,7 +8,7 @@ from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOper
 from airflow.providers.google.cloud.transfers.gcs_to_gcs import GCSToGCSOperator
 from airflow.models import Variable
 default_args = {
-    'start_date': datetime.datetime(2021, 7, 1),
+    'start_date': datetime.datetime(2021, 7, 5),
     'owner': 'santhosh_krishna',
     'depends_on_past': False,
     'email': ['santoshkrishna53@gmail.com'],
@@ -28,14 +28,8 @@ with DAG('assignment_2',default_args=default_args,schedule_interval='@daily') as
     task_id = 'gcs_to_big_queary',
     bucket = 'dataflow-pub-sub-training2',
     source_objects = [file_name],
-    destination_project_dataset_table = 'airflow.new_table',
-    schema_fields=[
-        {'name': 'id', 'type': 'INTEGER', 'mode': 'NULLABLE'},
-        {'name': 'brand', 'type': 'STRING', 'mode': 'NULLABLE'},
-        {'name': 'made_in', 'type': 'STRING', 'mode': 'NULLABLE'},
-        {'name': 'price', 'type': 'INTEGER', 'mode': 'NULLABLE'},
-        {'name': 'name', 'type': 'STRING', 'mode': 'NULLABLE'},
-        ],
+    destination_project_dataset_table = '{{ var.json.get("variables")[dag_run.conf["name"]]["TABLE_NAME"] }}',
+    autodetect = True,
     write_disposition='WRITE_TRUNCATE',
     source_format = 'csv',
     skip_leading_rows = 1
@@ -44,15 +38,15 @@ with DAG('assignment_2',default_args=default_args,schedule_interval='@daily') as
     # run query from temp table
     get_table_from_bq = bigquery_operator.BigQueryOperator(
     task_id='bq_from_temp_table',
-    sql="SELECT * FROM springmltraining-316807.airflow.new_table",
+    sql='{{ var.json.get("variables")[dag_run.conf["name"]]["SQL"] }}',
     use_legacy_sql=False,
-    destination_dataset_table='airflow.temp_table')
+    destination_dataset_table='{{ var.json.get("variables")[dag_run.conf["name"]]["TABLE_TEMP"] }}')
     
     # export results to bucket
     export_temp_table_to_gcs = bigquery_to_gcs.BigQueryToCloudStorageOperator(
     task_id='temp_table_to_gcs_object',
-    source_project_dataset_table='airflow.temp_table',
-    destination_cloud_storage_uris='gs://dataflow-pub-sub-training2/composer_result/results.csv',
+    source_project_dataset_table='{{ var.json.get("variables")[dag_run.conf["name"]]["TABLE_TEMP"] }}',
+    destination_cloud_storage_uris='{{ var.json.get("variables")[dag_run.conf["name"]]["destination_cloud_storage_uris"] }}',
     export_format='CSV')
     
     # copy the file to archive 
@@ -66,7 +60,7 @@ with DAG('assignment_2',default_args=default_args,schedule_interval='@daily') as
     # delete temp_table
     delete__temp_table = BigQueryDeleteTableOperator(
     task_id="delete_table",
-    deletion_dataset_table='springmltraining-316807.airflow.temp_table',
+    deletion_dataset_table='{{ var.json.get("variables")[dag_run.conf["name"]]["deletion_dataset_table"] }}',
     )
     t1 >> gcs_to_big_queary >> get_table_from_bq >> export_temp_table_to_gcs >> [delete__temp_table,move_source_file_to_archive]
 
