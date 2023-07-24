@@ -3,17 +3,17 @@
 		"assignment.csv": {
 						"TABLE_NAME" : "airflow.new_table",
             			"TABLE_TEMP":"airflow.temp_table",
-            			"SQL":"SELECT * FROM springmltraining-316807.airflow.new_table",
+            			"SQL":"SELECT * FROM training-316807.airflow.new_table",
 						"destination_cloud_storage_uris" : "gs://dataflow-pub-sub-training2/composer_result/results.csv",
-						"deletion_dataset_table":"springmltraining-316807.airflow.temp_table"
+						"deletion_dataset_table":"training-316807.airflow.temp_table"
 					},
 
         "assignment2.csv": {
 						"TABLE_NAME" : "airflow.new_table_2",
             			"TABLE_TEMP":"airflow.temp_table_2",
-            			"SQL":"SELECT * FROM springmltraining-316807.airflow.new_table_2",
+            			"SQL":"SELECT * FROM training-316807.airflow.new_table_2",
 						"destination_cloud_storage_uris" : "gs://dataflow-pub-sub-training2/composer_result/results2.csv",
-						"deletion_dataset_table":"springmltraining-316807.airflow.temp_table_2"
+						"deletion_dataset_table":"training-316807.airflow.temp_table_2"
 		}
 	}
 }
